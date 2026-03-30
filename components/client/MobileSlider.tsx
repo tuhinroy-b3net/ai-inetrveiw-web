@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const carouselData = [
     { img: "/images/mobile-apps-1.png" },
@@ -11,24 +11,79 @@ const carouselData = [
 ];
 
 export default function Mobile3DCarousel() {
-    const [currentIndex, setCurrentIndex] = useState(2);
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isInView, setIsInView] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
-
+    const sectionRef = useRef<HTMLDivElement | null>(null);
 
     const goToSlide = (index: number) => {
         setCurrentIndex(index);
     };
 
     useEffect(() => {
-        if (!isAutoPlaying) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsInView(entry.isIntersecting);
 
-        const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % carouselData.length);
-        }, 3000);
+                if (entry.isIntersecting) {
+                    document.body.style.overflow = "hidden";
+                } else {
+                    document.body.style.overflow = "auto";
+                }
+            },
+            { threshold: 0.6 }
+        );
 
-        return () => clearInterval(interval);
-    }, [isAutoPlaying]);
+        if (sectionRef.current) observer.observe(sectionRef.current);
+
+        return () => {
+            observer.disconnect();
+            document.body.style.overflow = "auto";
+        };
+    }, []);
+
+
+    useEffect(() => {
+        const handleScroll = (e: WheelEvent) => {
+            if (!isInView) return;
+
+            const SCROLL_THRESHOLD = 30;
+            if (Math.abs(e.deltaY) < SCROLL_THRESHOLD) return;
+
+            e.preventDefault();
+
+            if (isLocked) return;
+
+            setIsLocked(true);
+
+            if (e.deltaY > 0) {
+                // ⬇️ Down
+                if (currentIndex < carouselData.length - 1) {
+                    setCurrentIndex((prev) => prev + 1);
+                } else {
+                    // Last slide → go next section
+                    document.body.style.overflow = "auto";
+                    window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+                }
+            } else {
+                // ⬆️ Up
+                if (currentIndex > 0) {
+                    setCurrentIndex((prev) => prev - 1);
+                } else {
+
+                    document.body.style.overflow = "auto";
+                    window.scrollBy({ top: -window.innerHeight, behavior: "smooth" });
+                }
+            }
+
+            setTimeout(() => setIsLocked(false), 700);
+        };
+
+        window.addEventListener("wheel", handleScroll, { passive: false });
+
+        return () => window.removeEventListener("wheel", handleScroll);
+    }, [isInView, currentIndex, isLocked]);
 
     const getSlideStyle = (index: number) => {
         const diff = index - currentIndex;
@@ -101,8 +156,8 @@ export default function Mobile3DCarousel() {
 
     return (
         <section
+            ref={sectionRef}
             className="min-h-screen w-full flex flex-col items-center justify-center py-16 px-4 overflow-hidden relative mobile-slider"
-
         >
             <div className="absolute inset-0 opacity-10">
                 <div
@@ -115,7 +170,6 @@ export default function Mobile3DCarousel() {
             </div>
 
             <div className="relative w-full max-w-7xl mx-auto" style={{ perspective: "1200px" }}>
-
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[600px] z-40 pointer-events-none">
                     <div className="relative w-full h-full">
                         <div className="absolute inset-0 rounded-[50px] border border-gray-700 shadow-2xl">
@@ -140,8 +194,10 @@ export default function Mobile3DCarousel() {
                         const diff = index - currentIndex;
                         const totalSlides = carouselData.length;
                         let normalizedDiff = diff;
+
                         if (diff > totalSlides / 2) normalizedDiff = diff - totalSlides;
                         if (diff < -totalSlides / 2) normalizedDiff = diff + totalSlides;
+
                         const isCenter = normalizedDiff === 0;
 
                         return (
