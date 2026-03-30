@@ -14,13 +14,7 @@ export default function Mobile3DCarousel() {
     const [currentIndex, setCurrentIndex] = useState(2);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-    const nextSlide = useCallback(() => {
-        setCurrentIndex((prev) => (prev + 1) % carouselData.length);
-    }, []);
 
-    const prevSlide = useCallback(() => {
-        setCurrentIndex((prev) => (prev - 1 + carouselData.length) % carouselData.length);
-    }, []);
 
     const goToSlide = (index: number) => {
         setCurrentIndex(index);
@@ -108,8 +102,7 @@ export default function Mobile3DCarousel() {
     return (
         <section
             className="min-h-screen w-full flex flex-col items-center justify-center py-16 px-4 overflow-hidden relative mobile-slider"
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
+
         >
             <div className="absolute inset-0 opacity-10">
                 <div
