@@ -14,7 +14,6 @@ export default function Mobile3DCarousel() {
     const [currentIndex, setCurrentIndex] = useState(2);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-    // 🔥 FIX: no stale closure
     const nextSlide = useCallback(() => {
         setCurrentIndex((prev) => (prev + 1) % carouselData.length);
     }, []);
@@ -27,7 +26,6 @@ export default function Mobile3DCarousel() {
         setCurrentIndex(index);
     };
 
-    // 🔥 FIXED AUTOPLAY (reliable loop)
     useEffect(() => {
         if (!isAutoPlaying) return;
 
