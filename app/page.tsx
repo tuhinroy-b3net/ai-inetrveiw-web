@@ -68,7 +68,7 @@ export default function Home() {
                   </p>
                 </div>
 
-                <AboutSlider />
+                {/* <AboutSlider /> */}
 
                 <p className="note">
                   <strong>***</strong> Please note that the information about
@@ -82,24 +82,6 @@ export default function Home() {
 
 
         <MobileSlider />
-
-        <section className="news">
-          <div className="container">
-            <h3>Featured On</h3>
-
-            <div className="row">
-              <div className="col">
-                <img src="images/news-1.png" alt="" className="img-fluid" />
-              </div>
-              <div className="col">
-                <img src="images/health-care-drive.png" alt="" className="img-fluid" />
-              </div>
-              <div className="col">
-                <img src="images/news-3.png" alt="" className="img-fluid" />
-              </div>
-            </div>
-          </div>
-        </section>
 
         <section className="scanner-section-1">
           <div className="container">
