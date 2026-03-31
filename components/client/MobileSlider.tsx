@@ -169,10 +169,18 @@ export default function Mobile3DCarousel() {
                 />
             </div>
 
-            <div className="relative w-full max-w-7xl mx-auto" style={{ perspective: "1200px" }}>
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[600px] z-40 pointer-events-none">
-                    <div className="relative w-full h-full">
-                        <div className="absolute inset-0 rounded-[50px] border border-gray-700 shadow-2xl">
+            <div className="relative w-full max-w-7xl mx-auto  " style={{ perspective: "1200px" }}>
+                <div className="absolute  left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[700px] z-40 pointer-events-none">
+                    <div className="relative w-full p-5 h-[90%]">
+                        <div
+                            className="absolute inset-0  phone-mockup shadow-2xl"
+                            style={{
+                                backgroundImage: "url('/images/Phone-Mockup.png')",
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat"
+                            }}
+                        >
                             <div className="absolute top-5 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-full z-10" />
 
                             <div className="absolute inset-[10px] rounded-[40px] overflow-hidden p-1 bg-white">
