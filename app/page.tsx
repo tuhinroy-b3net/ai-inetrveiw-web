@@ -5,9 +5,7 @@ import MobileSlider from "@/components/client/MobileSlider";
 import Link from "next/link";
 export default function Home() {
   return (
-    <div>
       <div className="main-content">
-
         <div className="banner-top">
           <div className="container">
             <div className="banner-text">
@@ -173,6 +171,5 @@ export default function Home() {
           </div>
         </section>
       </div>
-    </div>
   );
 }
