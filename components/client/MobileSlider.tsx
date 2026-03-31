@@ -8,6 +8,9 @@ const carouselData = [
   { img: "/images/mobile-apps-8.png" },
   { img: "/images/mobile-apps-9.png" },
   { img: "/images/pill-identifier.jpg" },
+  { img: "/images/pill-identifier.jpg" },
+  { img: "/images/pill-identifier.jpg" },
+  { img: "/images/pill-identifier.jpg" },
 ];
 
 export default function Mobile3DCarousel() {
@@ -180,35 +183,25 @@ export default function Mobile3DCarousel() {
     } else if (isLeft) {
       translateX = -340;
       translateZ = -100;
-      rotateY = 25;
-      scale = 0.88;
-      opacity = 0.95;
-      zIndex = 20;
-    } else if (isRight) {
+      rotateY = -25; 
+    }
+    
+    else if (isRight) {
       translateX = 340;
       translateZ = -100;
-      rotateY = -25;
-      scale = 0.88;
-      opacity = 0.95;
-      zIndex = 20;
-    } else if (isFarLeft) {
+      rotateY = 25; 
+    }
+    
+    else if (isFarLeft) {
       translateX = -620;
       translateZ = -300;
-      rotateY = 35;
-      scale = 0.75;
-      opacity = 0.7;
-      zIndex = 10;
-    } else if (isFarRight) {
+      rotateY = -35; 
+    }
+    
+    else if (isFarRight) {
       translateX = 620;
       translateZ = -300;
-      rotateY = -35;
-      scale = 0.75;
-      opacity = 0.7;
-      zIndex = 10;
-    } else {
-      opacity = 0;
-      scale = 0.5;
-      zIndex = 0;
+      rotateY = 35; 
     }
 
     return {
@@ -251,9 +244,9 @@ export default function Mobile3DCarousel() {
                   backgroundRepeat: "no-repeat",
                 }}
               >
-                <div className="absolute left-1/2 top-5 z-10 h-3 w-12 -translate-x-1/2 rounded-full bg-black" />
+                <div className="absolute left-1/2 top-5 z-10 h-3 w-12 -translate-x-1/2 rounded-full " />
 
-                <div className="absolute inset-[10px] overflow-hidden rounded-[40px] bg-white p-1">
+                <div className="absolute inset-[10px] overflow-hidden rounded-[40px] ">
                   <img
                     src={carouselData[currentIndex].img}
                     alt="Mobile app screen"
@@ -287,17 +280,21 @@ export default function Mobile3DCarousel() {
                 >
                   {!isCenter && (
                     <div
-                      className="relative h-[560px] w-[280px] overflow-hidden rounded-[35px] bg-white shadow-2xl"
+                      className="relative h-[560px] w-[280px] overflow-hidden rounded-[35px]"
                       style={{
-                        boxShadow:
-                          "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)",
+                        // backgroundImage: "url('/images/Phone-Mockup.png')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                       
                       }}
+                      
                     >
-                      <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 rounded-b-xl" />
+                      {/* <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 rounded-b-xl" /> */}
                       <img
                         src={item.img}
                         alt={`App screen ${index + 1}`}
-                        className="h-full w-full pt-10"
+                        className="h-full w-full pt-10 opacity-50"
                       />
                     </div>
                   )}
