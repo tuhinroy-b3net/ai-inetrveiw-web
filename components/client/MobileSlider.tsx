@@ -1,252 +1,324 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const carouselData = [
-    { img: "/images/mobile-apps-1.png" },
-    { img: "/images/mobile-apps-7.png" },
-    { img: "/images/mobile-apps-8.png" },
-    { img: "/images/mobile-apps-9.png" },
-    { img: "/images/pill-identifier.jpg" },
+  { img: "/images/mobile-apps-1.png" },
+  { img: "/images/mobile-apps-7.png" },
+  { img: "/images/mobile-apps-8.png" },
+  { img: "/images/mobile-apps-9.png" },
+  { img: "/images/pill-identifier.jpg" },
 ];
 
 export default function Mobile3DCarousel() {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isInView, setIsInView] = useState(false);
-    const [isLocked, setIsLocked] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [canControlSlider, setCanControlSlider] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
-    const sectionRef = useRef<HTMLDivElement | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const goToSlide = (index: number) => {
-        setCurrentIndex(index);
-    };
+  const wasActiveRef = useRef(false);
+  const lastScrollYRef = useRef(0);
 
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                setIsInView(entry.isIntersecting);
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
 
-                if (entry.isIntersecting) {
-                    document.body.style.overflow = "hidden";
-                } else {
-                    document.body.style.overflow = "auto";
-                }
-            },
-            { threshold: 0.6 }
-        );
-
-        if (sectionRef.current) observer.observe(sectionRef.current);
-
-        return () => {
-            observer.disconnect();
-            document.body.style.overflow = "auto";
-        };
-    }, []);
-
-
-    useEffect(() => {
-        const handleScroll = (e: WheelEvent) => {
-            if (!isInView) return;
-
-            const SCROLL_THRESHOLD = 30;
-            if (Math.abs(e.deltaY) < SCROLL_THRESHOLD) return;
-
-            e.preventDefault();
-
-            if (isLocked) return;
-
-            setIsLocked(true);
-
-            if (e.deltaY > 0) {
-                // ⬇️ Down
-                if (currentIndex < carouselData.length - 1) {
-                    setCurrentIndex((prev) => prev + 1);
-                } else {
-                    // Last slide → go next section
-                    document.body.style.overflow = "auto";
-                    window.scrollBy({ top: window.innerHeight, behavior: "smooth" });
-                }
-            } else {
-                // ⬆️ Up
-                if (currentIndex > 0) {
-                    setCurrentIndex((prev) => prev - 1);
-                } else {
-
-                    document.body.style.overflow = "auto";
-                    window.scrollBy({ top: -window.innerHeight, behavior: "smooth" });
-                }
-            }
-
-            setTimeout(() => setIsLocked(false), 700);
-        };
-
-        window.addEventListener("wheel", handleScroll, { passive: false });
-
-        return () => window.removeEventListener("wheel", handleScroll);
-    }, [isInView, currentIndex, isLocked]);
-
-    const getSlideStyle = (index: number) => {
-        const diff = index - currentIndex;
-        const totalSlides = carouselData.length;
-
-        let normalizedDiff = diff;
-        if (diff > totalSlides / 2) normalizedDiff = diff - totalSlides;
-        if (diff < -totalSlides / 2) normalizedDiff = diff + totalSlides;
-
-        const isActive = normalizedDiff === 0;
-        const isLeft = normalizedDiff === -1;
-        const isRight = normalizedDiff === 1;
-        const isFarLeft = normalizedDiff === -2;
-        const isFarRight = normalizedDiff === 2;
-
-        let translateX = 0;
-        let translateZ = 0;
-        let rotateY = 0;
-        let scale = 1;
-        let opacity = 1;
-        let zIndex = 10;
-
-        if (isActive) {
-            translateX = 0;
-            translateZ = 200;
-            rotateY = 0;
-            scale = 1;
-            zIndex = 30;
-        } else if (isLeft) {
-            translateX = -340;
-            translateZ = -100;
-            rotateY = 25;
-            scale = 0.88;
-            opacity = 0.95;
-            zIndex = 20;
-        } else if (isRight) {
-            translateX = 340;
-            translateZ = -100;
-            rotateY = -25;
-            scale = 0.88;
-            opacity = 0.95;
-            zIndex = 20;
-        } else if (isFarLeft) {
-            translateX = -620;
-            translateZ = -300;
-            rotateY = 35;
-            scale = 0.75;
-            opacity = 0.7;
-            zIndex = 10;
-        } else if (isFarRight) {
-            translateX = 620;
-            translateZ = -300;
-            rotateY = -35;
-            scale = 0.75;
-            opacity = 0.7;
-            zIndex = 10;
-        } else {
-            opacity = 0;
-            scale = 0.5;
-            zIndex = 0;
+  useEffect(() => {
+    let ticking = false;
+  
+    const checkSliderActivation = () => {
+      if (!sectionRef.current) {
+        setCanControlSlider(false);
+        return;
+      }
+  
+      const rect = sectionRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const sectionHeight = sectionRef.current.offsetHeight;
+  
+      const coversFullScreenHeight = sectionHeight >= viewportHeight;
+  
+      // more forgiving than exact 0 / viewportHeight match
+      const ACTIVATION_OFFSET = 120;
+  
+      const fullyCoveringViewport =
+        rect.top <= ACTIVATION_OFFSET &&
+        rect.bottom >= viewportHeight - ACTIVATION_OFFSET;
+  
+      const shouldActivate =
+        coversFullScreenHeight && fullyCoveringViewport;
+  
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollYRef.current;
+      const scrollingUp = currentScrollY < lastScrollYRef.current;
+  
+      if (shouldActivate && !wasActiveRef.current) {
+        if (scrollingDown) {
+          setCurrentIndex(0);
+        } else if (scrollingUp) {
+          setCurrentIndex(carouselData.length - 1);
         }
+  
+        document.body.style.overflow = "hidden";
+      }
+  
+      if (!shouldActivate && wasActiveRef.current) {
+        document.body.style.overflow = "auto";
+      }
+  
+      wasActiveRef.current = shouldActivate;
+      lastScrollYRef.current = currentScrollY;
+      setCanControlSlider(shouldActivate);
+    };
+  
+    const handleScroll = () => {
+      if (ticking) return;
+  
+      ticking = true;
+  
+      requestAnimationFrame(() => {
+        checkSliderActivation();
+        ticking = false;
+      });
+    };
+  
+    checkSliderActivation();
+  
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", checkSliderActivation);
+  
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkSliderActivation);
+      document.body.style.overflow = "auto";
+  
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
-        return {
-            transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-            opacity,
-            zIndex,
-            transition: "all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        };
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (!canControlSlider) return;
+
+      const SCROLL_THRESHOLD = 30;
+      if (Math.abs(e.deltaY) < SCROLL_THRESHOLD) return;
+
+      e.preventDefault();
+
+      if (isLocked) return;
+      setIsLocked(true);
+
+      if (e.deltaY > 0) {
+        if (currentIndex < carouselData.length - 1) {
+          setCurrentIndex((prev) => prev + 1);
+        } else {
+          document.body.style.overflow = "auto";
+          wasActiveRef.current = false;
+
+          window.scrollBy({
+            top: window.innerHeight,
+            behavior: "smooth",
+          });
+        }
+      } else {
+        if (currentIndex > 0) {
+          setCurrentIndex((prev) => prev - 1);
+        } else {
+          document.body.style.overflow = "auto";
+          wasActiveRef.current = false;
+
+          window.scrollBy({
+            top: -window.innerHeight,
+            behavior: "smooth",
+          });
+        }
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        setIsLocked(false);
+      }, 700);
     };
 
-    return (
-        <section
-            ref={sectionRef}
-            className="min-h-screen w-full flex flex-col items-center justify-center py-16 px-4 overflow-hidden relative mobile-slider"
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+    };
+  }, [canControlSlider, currentIndex, isLocked]);
+
+  const getSlideStyle = (index: number) => {
+    const diff = index - currentIndex;
+    const totalSlides = carouselData.length;
+
+    let normalizedDiff = diff;
+    if (diff > totalSlides / 2) normalizedDiff = diff - totalSlides;
+    if (diff < -totalSlides / 2) normalizedDiff = diff + totalSlides;
+
+    const isActive = normalizedDiff === 0;
+    const isLeft = normalizedDiff === -1;
+    const isRight = normalizedDiff === 1;
+    const isFarLeft = normalizedDiff === -2;
+    const isFarRight = normalizedDiff === 2;
+
+    let translateX = 0;
+    let translateZ = 0;
+    let rotateY = 0;
+    let scale = 1;
+    let opacity = 1;
+    let zIndex = 10;
+
+    if (isActive) {
+      translateX = 0;
+      translateZ = 200;
+      rotateY = 0;
+      scale = 1;
+      zIndex = 30;
+    } else if (isLeft) {
+      translateX = -340;
+      translateZ = -100;
+      rotateY = 25;
+      scale = 0.88;
+      opacity = 0.95;
+      zIndex = 20;
+    } else if (isRight) {
+      translateX = 340;
+      translateZ = -100;
+      rotateY = -25;
+      scale = 0.88;
+      opacity = 0.95;
+      zIndex = 20;
+    } else if (isFarLeft) {
+      translateX = -620;
+      translateZ = -300;
+      rotateY = 35;
+      scale = 0.75;
+      opacity = 0.7;
+      zIndex = 10;
+    } else if (isFarRight) {
+      translateX = 620;
+      translateZ = -300;
+      rotateY = -35;
+      scale = 0.75;
+      opacity = 0.7;
+      zIndex = 10;
+    } else {
+      opacity = 0;
+      scale = 0.5;
+      zIndex = 0;
+    }
+
+    return {
+      transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+      opacity,
+      zIndex,
+      transition: "all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    };
+  };
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen w-full overflow-hidden px-4 mobile-slider"
+    >
+      <div className="absolute inset-0 opacity-10">
+        <div
+          className="h-full w-full"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+      </div>
+
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <div
+          className="relative mx-auto w-full max-w-7xl"
+          style={{ perspective: "1200px" }}
         >
-            <div className="absolute inset-0 opacity-10">
-                <div
-                    className="w-full h-full"
-                    style={{
-                        backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)`,
-                        backgroundSize: "40px 40px",
-                    }}
-                />
-            </div>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-40 h-[700px] w-[300px] -translate-x-1/2 -translate-y-1/2">
+            <div className="relative h-[90%] w-full p-5">
+              <div
+                className="phone-mockup absolute inset-0 shadow-2xl"
+                style={{
+                  backgroundImage: "url('/images/Phone-Mockup.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              >
+                <div className="absolute left-1/2 top-5 z-10 h-3 w-12 -translate-x-1/2 rounded-full bg-black" />
 
-            <div className="relative w-full max-w-7xl mx-auto  " style={{ perspective: "1200px" }}>
-                <div className="absolute  left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[700px] z-40 pointer-events-none">
-                    <div className="relative w-full p-5 h-[90%]">
-                        <div
-                            className="absolute inset-0  phone-mockup shadow-2xl"
-                            style={{
-                                backgroundImage: "url('/images/Phone-Mockup.png')",
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                                backgroundRepeat: "no-repeat"
-                            }}
-                        >
-                            <div className="absolute top-5 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-full z-10" />
-
-                            <div className="absolute inset-[10px] rounded-[40px] overflow-hidden p-1 bg-white">
-                                <img
-                                    src={carouselData[currentIndex].img}
-                                    alt="Mobile app screen"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                <div className="absolute inset-[10px] overflow-hidden rounded-[40px] bg-white p-1">
+                  <img
+                    src={carouselData[currentIndex].img}
+                    alt="Mobile app screen"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
+              </div>
+            </div>
+          </div>
 
+          <div
+            className="relative flex h-[650px] items-center justify-center"
+            style={{ transformStyle: "preserve-3d" }}
+          >
+            {carouselData.map((item, index) => {
+              const diff = index - currentIndex;
+              const totalSlides = carouselData.length;
+              let normalizedDiff = diff;
+
+              if (diff > totalSlides / 2) normalizedDiff = diff - totalSlides;
+              if (diff < -totalSlides / 2) normalizedDiff = diff + totalSlides;
+
+              const isCenter = normalizedDiff === 0;
+
+              return (
                 <div
-                    className="relative h-[650px] flex items-center justify-center"
-                    style={{ transformStyle: "preserve-3d" }}
+                  key={index}
+                  className="absolute cursor-pointer"
+                  style={getSlideStyle(index)}
+                  onClick={() => goToSlide(index)}
                 >
-                    {carouselData.map((item, index) => {
-                        const diff = index - currentIndex;
-                        const totalSlides = carouselData.length;
-                        let normalizedDiff = diff;
-
-                        if (diff > totalSlides / 2) normalizedDiff = diff - totalSlides;
-                        if (diff < -totalSlides / 2) normalizedDiff = diff + totalSlides;
-
-                        const isCenter = normalizedDiff === 0;
-
-                        return (
-                            <div
-                                key={index}
-                                className="absolute cursor-pointer"
-                                style={getSlideStyle(index)}
-                                onClick={() => goToSlide(index)}
-                            >
-                                {!isCenter && (
-                                    <div
-                                        className="relative w-[280px] h-[560px] rounded-[35px] overflow-hidden shadow-2xl bg-white"
-                                        style={{
-                                            boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)",
-                                        }}
-                                    >
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded-b-xl z-20" />
-                                        <img
-                                            src={item.img}
-                                            alt={`App screen ${index + 1}`}
-                                            className="w-full h-full pt-10"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                  {!isCenter && (
+                    <div
+                      className="relative h-[560px] w-[280px] overflow-hidden rounded-[35px] bg-white shadow-2xl"
+                      style={{
+                        boxShadow:
+                          "0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 rounded-b-xl" />
+                      <img
+                        src={item.img}
+                        alt={`App screen ${index + 1}`}
+                        className="h-full w-full pt-10"
+                      />
+                    </div>
+                  )}
                 </div>
-            </div>
+              );
+            })}
+          </div>
+        </div>
 
-            <div className="text-center mt-8 relative z-10">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-wider uppercase">
-                    Choose Your Search
-                </h2>
-                <p className="text-lg text-white/80 mb-1 font-normal">
-                    Multiple Ways to Find Your Pill
-                </p>
-                <p className="text-gray-400 text-base">
-                    Pill Identifier & Drug List - Patient Care Edition
-                </p>
-            </div>
-        </section>
-    );
+        <div className="relative z-10 mt-8 text-center">
+          <h2 className="mb-3 text-3xl font-bold uppercase tracking-wider text-white md:text-4xl">
+            Choose Your Search
+          </h2>
+          <p className="mb-1 text-lg font-normal text-white/80">
+            Multiple Ways to Find Your Pill
+          </p>
+          <p className="text-base text-gray-400">
+            Pill Identifier & Drug List - Patient Care Edition
+          </p>
+        </div>
+      </div>
+    </section>
+  );
 }
