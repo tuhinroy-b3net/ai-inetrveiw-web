@@ -14,6 +14,9 @@ html {
   font-family: "Lato", sans-serif;
 }
 
+.main-content{
+  width: 100dvw;
+}
 img {
   max-width: 100%;
 }
@@ -87,7 +90,7 @@ p {
 
 .banner-top {
   background-image: url('/images/Banner-bg.png');
-  width: 100%;
+  width: 100dvw;
   height: 110vh;
   position: relative;
   background-size: cover;

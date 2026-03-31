@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 const carouselData = [
   { img: "/images/mobile-apps-1.png" },
+  { img: "/images/mobile-apps-2.png" },
+  { img: "/images/mobile-apps-3.png" },
+  { img: "/images/mobile-apps-4.png" },
+  { img: "/images/mobile-apps-5.png" },
+  { img: "/images/mobile-apps-6.png" },
   { img: "/images/mobile-apps-7.png" },
   { img: "/images/mobile-apps-8.png" },
-  { img: "/images/mobile-apps-9.png" },
-  { img: "/images/pill-identifier.jpg" },
-  { img: "/images/pill-identifier.jpg" },
-  { img: "/images/pill-identifier.jpg" },
-  { img: "/images/pill-identifier.jpg" },
 ];
 
 export default function Mobile3DCarousel() {
@@ -175,7 +175,7 @@ export default function Mobile3DCarousel() {
     let zIndex = 10;
 
     if (isActive) {
-      translateX = 0;
+      translateX = 200;
       translateZ = 200;
       rotateY = 0;
       scale = 1;
