@@ -11,7 +11,7 @@ export default function Home() {
             <div className="banner-text">
               <h1>Pill Identifier & Drug LIST</h1>
               <h2>Patient Care Edition</h2>
-              <div className="downld">
+              <div className="mt-5">
                 <h4>Available for</h4>
                 <h3>Download!</h3>
                 <div className="play-store flex">
