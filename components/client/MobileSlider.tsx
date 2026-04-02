@@ -208,7 +208,7 @@ export default function Mobile3DCarousel() {
       transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
       opacity,
       zIndex,
-      transition: "all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      transition: "",
     };
   };
 
