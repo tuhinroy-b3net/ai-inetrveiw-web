@@ -9,17 +9,21 @@ export default function Home() {
       <div className="banner-top">
         <div className="container">
           <div className="banner-text">
-            <div className="mt-5">
-              <img src="/images/Ai.png" />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+              <img src="/images/Ai.png"  className="h-28 w-36"/>
               <h1>INTERVIEW COPILOT</h1>
-              <h4>Available for</h4>
-              <h3>Download!</h3>
+              </div>
+              <div className="flex flex-col">
+              <h4 className="m-0">Available for</h4>
+              <h3 className="m-0">Download!</h3>
+              </div>
               <div className="play-store flex">
                 <a className="up-down-hover" href="https://itunes.apple.com/us/app/pill-identifier-and-drug-list/id1106829188?mt=8"><img src="/images/play-store.png" alt="playstore" /></a>
                 <a className="up-down-hover" href="https://play.google.com/store/apps/details?id=com.PillIdentifierandDrugList.app"><img src="/images/play-store-1.png" alt="Appstore" /></a>
               </div>
             </div>
-          </div>
+          </div>  
         </div>
       </div>
 
